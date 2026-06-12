@@ -123,6 +123,7 @@ class VinylProcessor extends AudioWorkletProcessor {
     
     this.targetSpeed = 0;  
     this.currentSpeed = 0; 
+    this.currentGain = 0; // Internal micro-volume fader (0 to 1)
     
     this.port.onmessage = (e) => {
       if (e.data.type === 'buffer') {
@@ -141,40 +142,44 @@ class VinylProcessor extends AudioWorkletProcessor {
     if (!this.buffer) return true;
 
     for (let i = 0; i < outputChannel.length; i++) {
-      // Snappier smoothing value tailored for Android event loops (0.02)
+      // Speed smoothing (keeps your sweet spot feel)
       this.currentSpeed += (this.targetSpeed - this.currentSpeed) * 0.02;
 
       if (Math.abs(this.currentSpeed) < 0.0001) {
         this.currentSpeed = 0;
       }
 
+      // --- DYNAMIC INTERACTION VOLUME LAYER ---
+      // If speed is 0, target gain is 0 (silence). If moving, target gain is 1 (full volume).
+      const targetGain = this.currentSpeed === 0 ? 0 : 1;
+      
+      // Smoothly fade the volume over a handful of samples (0.05 rate)
+      // This eliminates the stop/start pop without adding audible lag
+      this.currentGain += (targetGain - this.currentGain) * 0.05;
+
       this.phase += this.currentSpeed;
       
-      // Keep phase wrapped inside buffer bounds
       if (this.phase >= this.buffer.length) {
         this.phase -= this.buffer.length;
       } else if (this.phase < 0) {
         this.phase += this.buffer.length;
       }
 
-      // --- NEW ANTI-POP MATRIX: Linear Sample Interpolation ---
+      // Linear sample interpolation
       const indexA = Math.floor(this.phase);
-      // Grab the next sample sequence for cross-blending
       const indexB = (indexA + 1) >= this.buffer.length ? 0 : indexA + 1;
-      
-      // Get the fractional remainder (how far between samples we are)
       const t = this.phase - indexA;
 
       const sampleA = this.buffer[indexA] || 0;
       const sampleB = this.buffer[indexB] || 0;
-
-      // Smoothly blend sample A and sample B together based on fractional distance
       const smoothedSample = sampleA + t * (sampleB - sampleA);
 
-      outputChannel[i] = smoothedSample;
-      
+      // Apply our micro-gain filter to the final output sample
+      const finalSample = smoothedSample * this.currentGain;
+
+      outputChannel[i] = finalSample;
       if (output[1]) {
-        output[1][i] = smoothedSample;
+        output[1][i] = finalSample;
       }
     }
 
