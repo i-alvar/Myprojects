@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import Vinyl from '../components/vinyl'
 
-// Fallback logic to ensure it doesn't break if PUBLIC_URL is undefined
-const BASE_PATH = process.env.PUBLIC_URL || '';
+// Bypasses the missing Node types error safely in browser environments
+const BASE_PATH = (typeof process !== 'undefined' && (process as any).env?.PUBLIC_URL) || '';
 
 // --- Adaptable Section Title ---
 const SectionTitle = ({ children, theme }: { children: ReactNode; theme: 'club' | 'lounge' }) => (
