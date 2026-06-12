@@ -137,7 +137,7 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
       workletNode.current = new AudioWorkletNode(audioCtx.current, 'vinyl-processor')
       workletNode.current.connect(audioCtx.current.destination)
 
-      const res = await fetch('./assets/vinyl_loop.mp3')
+      const res = await fetch('./assets/vinyl_loop.wav')
       const arrayBuffer = await res.arrayBuffer()
       const buffer = await audioCtx.current.decodeAudioData(arrayBuffer)
 
