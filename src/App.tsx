@@ -1,18 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import Vinyl from '../components/vinyl'
 
-// Completely bypasses the missing 'process' type check by evaluating window properties dynamically
-const getPublicUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    const customWindow = window as any;
-    if (customWindow.process?.env?.PUBLIC_URL) {
-      return customWindow.process.env.PUBLIC_URL;
-    }
-  }
-  return '';
-};
-
-const BASE_PATH = getPublicUrl();
+// Using strict relative paths prevents Vite subdirectory 404 asset drops
+const BASE_PATH = '.';
 
 // --- Adaptable Section Title ---
 const SectionTitle = ({ children, theme }: { children: ReactNode; theme: 'club' | 'lounge' }) => (
