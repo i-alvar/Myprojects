@@ -142,6 +142,7 @@ const PhotoGallery = ({ theme }: { theme: 'club' | 'lounge' }) => {
 
 export default function App() {
   const [vinylLoaded, setVinylLoaded] = useState(false)
+  const [vinylError, setVinylError] = useState(false)
   const [theme, setTheme] = useState<'club' | 'lounge'>('club')
 
   const targetEmail = 'sensiwarriors@gmail.com'
@@ -246,10 +247,21 @@ export default function App() {
 
           <div className="w-full max-w-[640px] md:max-w-[900px] aspect-[900/500] relative brightness-[0.8] contrast-[1.1]">
             <img src={`${BASE_PATH}/assets/turntable_base.png`} alt="Base" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0" />
+            
             <div className="absolute left-[17.5%] top-[-6%] w-[55%] h-[100%] z-10 flex items-center justify-center">
-              <Vinyl onReady={() => setVinylLoaded(true)} />
+              {/* Wrapped component inside safety bounds to isolate vinyl processor drops */}
+              {!vinylError ? (
+                <div onError={() => setVinylError(true)}>
+                  <Vinyl onReady={() => setVinylLoaded(true)} />
+                </div>
+              ) : (
+                <div className="text-[11px] text-zinc-600 font-mono tracking-wide uppercase border border-dashed border-zinc-800 rounded-full w-40 h-40 flex items-center justify-center text-center p-4">
+                  Deck offline
+                </div>
+              )}
             </div>
-            {vinylLoaded && (
+
+            {vinylLoaded && !vinylError && (
               <img src={`${BASE_PATH}/assets/tonearm.png`} alt="Tonearm" className="absolute left-[31%] top-[2.2%] w-[55%] h-[70%] object-contain pointer-events-none z-20 opacity-0 animate-tonearmFade" />
             )}
           </div>
