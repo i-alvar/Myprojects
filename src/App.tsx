@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import Vinyl from '../components/vinyl'
 
 // --- Adaptable Section Title ---
