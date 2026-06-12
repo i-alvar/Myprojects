@@ -19,10 +19,8 @@ function VinylModel({
   const ref = useRef<THREE.Group>(null)
   const wrapper = useRef<THREE.Group>(null)
   
-  // Safe relative resolution for GitHub Pages subdirectory structures
   const { scene } = useGLTF('./models/vinyl_single.glb') as any
 
-  // Material and asset styling alignment
   useEffect(() => {
     if (!scene) return
     scene.traverse((child: any) => {
@@ -36,12 +34,10 @@ function VinylModel({
     })
   }, [scene])
 
-  // Tilt setting for interactive angle layout
   useEffect(() => {
     if (ref.current) ref.current.rotation.x = 0.45
   }, [])
 
-  // Auto shrink scale buffer post animation
   useEffect(() => {
     const t = setTimeout(() => {
       if (wrapper.current) {
@@ -74,7 +70,6 @@ function VinylModel({
     onSpeedChange(velocity.current)
   }
 
-  // Animation framework rendering tick loop
   useEffect(() => {
     let frame: number
     const animate = () => {
@@ -112,6 +107,7 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const audioCtx = useRef<AudioContext | null>(null)
   const workletNode = useRef<AudioWorkletNode | null>(null)
+  const gainNode = useRef<GainNode | null>(null) // Electronic volume fader block
 
   const [spinning, setSpinning] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(0)
@@ -126,7 +122,7 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Async core runtime initialization layout
+  // Audio setup with hardware Gain integration
   useEffect(() => {
     const loadAudio = async () => {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
@@ -135,7 +131,13 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
       await audioCtx.current.audioWorklet.addModule('./worklets/vinylProcessor.js')
 
       workletNode.current = new AudioWorkletNode(audioCtx.current, 'vinyl-processor')
-      workletNode.current.connect(audioCtx.current.destination)
+      
+      // Create and chain the hardware Gain fader
+      gainNode.current = audioCtx.current.createGain()
+      gainNode.current.gain.setValueAtTime(1, audioCtx.current.currentTime)
+      
+      workletNode.current.connect(gainNode.current)
+      gainNode.current.connect(audioCtx.current.destination)
 
       const res = await fetch('./assets/vinyl_loop.wav')
       const arrayBuffer = await res.arrayBuffer()
@@ -151,29 +153,46 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
       await audioCtx.current.resume()
     }
 
-    loadAudio().catch(err => console.error("Audio system initialized dynamically with asset restrictions:", err))
+    loadAudio().catch(err => console.error("Audio engine failed initialization:", err))
   }, [])
 
-  // Smart Observer: Suspends the audio pipeline strictly if it is NOT active/playing when off screen
+  // --- ANTI-POP FADE INTERSECTION OBSERVER ---
   useEffect(() => {
     if (!containerRef.current) return
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!audioCtx.current) return
+        if (!audioCtx.current || !gainNode.current) return
+
+        const now = audioCtx.current.currentTime
 
         if (entry.isIntersecting) {
+          // Bring audio back online gracefully
           if (audioCtx.current.state === 'suspended') {
-            audioCtx.current.resume()
+            audioCtx.current.resume().then(() => {
+              if (gainNode.current && audioCtx.current) {
+                gainNode.current.gain.linearRampToValueAtTime(1, audioCtx.current.currentTime + 0.05)
+              }
+            })
+          } else {
+            gainNode.current.gain.linearRampToValueAtTime(1, now + 0.05)
           }
         } else {
-          if (!spinning && audioCtx.current.state === 'running') {
-            audioCtx.current.suspend()
+          // If NOT spinning and scrolled away, ramp the volume down to 0 before suspending
+          if (!spinning) {
+            gainNode.current.gain.linearRampToValueAtTime(0, now + 0.05)
+            
+            setTimeout(() => {
+              // Only suspend if the user didn't instantly scroll back up during the fade window
+              if (audioCtx.current && !spinning && !entry.isIntersecting) {
+                audioCtx.current.suspend()
+              }
+            }, 60)
           }
         }
       },
       { 
-        rootMargin: '100px 0px', 
+        rootMargin: '150px 0px', // Increased margin so transitions execute before coming into view
         threshold: 0.0 
       }
     )
@@ -182,7 +201,7 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
     return () => observer.disconnect()
   }, [spinning])
 
-  // Direct downstream message transmission link to Worklet thread
+  // Speed adjustments
   useEffect(() => {
     if (!workletNode.current) return
 
@@ -209,7 +228,9 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
   }, [speed, spinning, dragging])
 
   const handleClick = () => {
-    audioCtx.current?.resume()
+    if (audioCtx.current?.state === 'suspended') {
+      audioCtx.current.resume()
+    }
     setSpinning((prev) => !prev)
   }
 
