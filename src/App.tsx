@@ -43,10 +43,10 @@ const PhotoGallery = ({ theme }: { theme: 'club' | 'lounge' }) => {
   const [sweepDirection, setSweepDirection] = useState<'forward' | 'backward'>('forward')
 
   const photos = [
-    { url: '/assets/sensiatrubixweb.webp', caption: 'Free Dope - Rubix Warehouse - Brunswick' },
-    { url: '/assets/gallery-one.webp', caption: 'Micky Finn & General Levy Support - Rubix Warehouse - Brunswick' },
-    { url: '/assets/scribe-support.webp', caption: 'Scribe (I was his DJ that night)- Rubix Warehouse - Brunswick' },
-    { url: '/assets/sensiwarriorslogo.webp', caption: 'Sensi Warriors Logo' },
+    { url: `${import.meta.env.BASE_URL}assets/sensiatrubixweb.webp`, caption: 'Free Dope - Rubix Warehouse - Brunswick' },
+    { url: `${import.meta.env.BASE_URL}assets/gallery-one.webp`, caption: 'Micky Finn & General Levy Support - Rubix Warehouse - Brunswick' },
+    { url: `${import.meta.env.BASE_URL}assets/scribe-support.webp`, caption: 'Scribe (I was his DJ that night)- Rubix Warehouse - Brunswick' },
+    { url: `${import.meta.env.BASE_URL}assets/sensiwarriorslogo.webp`, caption: 'Sensi Warriors Logo' },
   ]
 
   const cols = 20
@@ -71,12 +71,6 @@ const PhotoGallery = ({ theme }: { theme: 'club' | 'lounge' }) => {
   const prev = () => triggerShatterTransition((currentIndex - 1 + photos.length) % photos.length, 'backward')
 
   return (
-    /* 1. '-m-12' and 'p-12' create a invisible buffer area.
-      2. 'overflow-hidden' on the parent "fences in" the shards so they don't 
-         expand the page width, killing the horizontal scroll glitch.
-      3. The inner div remains 'overflow-visible' so the shards are free 
-         to fly into that buffer area.
-    */
     <div className="relative p-40 -m-40 overflow-hidden">
       <div className="relative group overflow-visible aspect-video sm:aspect-[21/9]">
         
@@ -142,6 +136,7 @@ const PhotoGallery = ({ theme }: { theme: 'club' | 'lounge' }) => {
     </div>
   )
 }
+
 export default function App() {
   const [vinylLoaded, setVinylLoaded] = useState(false)
   const [theme, setTheme] = useState<'club' | 'lounge'>('club')
@@ -154,22 +149,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100 font-sans overflow-x-hidden relative transition-colors duration-700 selection:bg-white selection:text-black">
+      {/* Club Background */}
       <div className={`fixed inset-0 z-[1] transition-opacity duration-1000 ${theme === 'club' ? 'opacity-15' : 'opacity-0'}`}>
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat" 
-          style={{ backgroundImage: "url('/assets/clubtheme.webp')" }} 
+          style={{ backgroundImage: `url('${import.meta.env.BASE_URL}assets/clubtheme.webp')` }} 
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/60 via-[#050507]/80 to-[#050507]" />
       </div>
 
       {/* Lounge Background */}
-  <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === 'lounge' ? 'opacity-15' : 'opacity-0'}`}>
-    <div 
-      className="absolute inset-0 bg-cover bg-center bg-no-repeat" 
-      style={{ backgroundImage: "url('/assets/loungetheme.webp')" }} 
-    />
-    <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/60 via-[#050507]/80 to-[#050507]" />
-  </div>
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === 'lounge' ? 'opacity-15' : 'opacity-0'}`}>
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat" 
+          style={{ backgroundImage: `url('${import.meta.env.BASE_URL}assets/loungetheme.webp')` }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/60 via-[#050507]/80 to-[#050507]" />
+      </div>
+
       {/* --- DYNAMIC AMBIENT LIGHTS BASED ON THEME --- */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#141417_1px,transparent_1px),linear-gradient(to_bottom,#141417_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-30 z-0" />
       
@@ -229,47 +226,48 @@ export default function App() {
           </div>
 
           <div className="relative group shrink-0 -translate-y-[12px]">
-  <div className={`absolute -inset-1 rounded-full blur opacity-20 group-hover:opacity-50 transition duration-500 bg-gradient-to-r ${
-    theme === 'club' ? 'from-fuchsia-500 to-blue-500' : 'from-amber-500 to-orange-500'
-  }`} />
-  <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-white/10 bg-zinc-950 shadow-2xl">
-    <img 
-      src="/assets/profile.jpg" 
-      alt="Portrait" 
-      className="h-full w-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
-    />
-  </div>
-</div>
+            <div className={`absolute -inset-1 rounded-full blur opacity-20 group-hover:opacity-50 transition duration-500 bg-gradient-to-r ${
+              theme === 'club' ? 'from-fuchsia-500 to-blue-500' : 'from-amber-500 to-orange-500'
+            }`} />
+            <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-white/10 bg-zinc-950 shadow-2xl">
+              <img 
+                src={`${import.meta.env.BASE_URL}assets/profile.jpg`} 
+                alt="Portrait" 
+                className="h-full w-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
+              />
+            </div>
+          </div>
         </header>
 
-{/* Turntable Console */}
-<div className="mt-6 flex flex-col items-center justify-center w-full max-w-full overflow-hidden">
-  
-  {/* Clear Instructional Prompt */}
-  <div className="mb-4 text-[10px] font-mono uppercase tracking-widest text-zinc-400 animate-pulse">
-    [ Interactive Platform: Click or Drag to Play ]
-  </div>
+        {/* Turntable Console */}
+        <div className="mt-6 flex flex-col items-center justify-center w-full max-w-full overflow-hidden">
+          
+          {/* Clear Instructional Prompt */}
+          <div className="mb-4 text-[10px] font-mono uppercase tracking-widest text-zinc-400 animate-pulse">
+            [ Interactive Platform: Click or Drag to Play ]
+          </div>
 
-  <div className="w-full max-w-[640px] md:max-w-[900px] aspect-[900/500] relative brightness-[0.8] contrast-[1.1]">
-    <img src="/assets/turntable_base.png" alt="Base" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0" />
-    <div className="absolute left-[17.5%] top-[-6%] w-[55%] h-[100%] z-10 flex items-center justify-center">
-      <Vinyl onReady={() => setVinylLoaded(true)} />
-    </div>
-    {vinylLoaded && (
-      <img src="/assets/tonearm.png" alt="Tonearm" className="absolute left-[31%] top-[2.2%] w-[55%] h-[70%] object-contain pointer-events-none z-20 opacity-0 animate-tonearmFade" />
-    )}
-  </div>
+          <div className="w-full max-w-[640px] md:max-w-[900px] aspect-[900/500] relative brightness-[0.8] contrast-[1.1]">
+            <img src={`${import.meta.env.BASE_URL}assets/turntable_base.png`} alt="Base" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0" />
+            <div className="absolute left-[17.5%] top-[-6%] w-[55%] h-[100%] z-10 flex items-center justify-center">
+              <Vinyl onReady={() => setVinylLoaded(true)} />
+            </div>
+            {vinylLoaded && (
+              <img src={`${import.meta.env.BASE_URL}assets/tonearm.png`} alt="Tonearm" className="absolute left-[31%] top-[2.2%] w-[55%] h-[70%] object-contain pointer-events-none z-20 opacity-0 animate-tonearmFade" />
+            )}
+          </div>
 
-  {/* Refined Credit Placement */}
-  <div className="mt-8 pt-4 border-t border-zinc-900/50 text-center text-[9px] text-zinc-600 uppercase tracking-widest max-w-md leading-relaxed opacity-60">
-    <p>
-      3D Model: “Vinyl Single” by mikedludlam (<a href="https://skfb.ly/oxIvC" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">CC BY 4.0</a>)
-    </p>
-    <p className="mt-1">
-      Implementation, Tonearm Design, and Audio Engineering by DJ Sensi.
-    </p>
-  </div>
-</div>
+          {/* Refined Credit Placement */}
+          <div className="mt-8 pt-4 border-t border-zinc-900/50 text-center text-[9px] text-zinc-600 uppercase tracking-widest max-w-md leading-relaxed opacity-60">
+            <p>
+              3D Model: “Vinyl Single” by mikedludlam (<a href="https://skfb.ly/oxIvC" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">CC BY 4.0</a>)
+            </p>
+            <p className="mt-1">
+              Implementation, Tonearm Design, and Audio Engineering by DJ Sensi.
+            </p>
+          </div>
+        </div>
+
         <main className="flex flex-col gap-14 mt-12 w-full">
           
           {/* Photo Gallery Section */}
@@ -282,23 +280,23 @@ export default function App() {
           <section className="w-full">
             <SectionTitle theme={theme}>The Sound</SectionTitle>
             <div className="text-base text-zinc-300 leading-relaxed space-y-4 font-normal">
-            <p>With over 20 years of experience behind the decks, DJ Sensi’s sound is deeply rooted in the foundations of Hip Hop, Funk, and Soul. 
+              <p>With over 20 years of experience behind the decks, DJ Sensi’s sound is deeply rooted in the foundations of Hip Hop, Funk, and Soul. 
               His vinyl-driven approach seamlessly bridges these genres with the high-energy pulse of Jungle and Drum & Bass. Over the years, sharing stages with legends such as Afrika Bambaataa, Wu-Tang Clan (Killa Beez), DJ Hype, Krafty Kuts, DJ Yoda, and 5× World DMC Champion DJ Craze.</p>
-  
-  <p>His musical journey has taken him across the globe, including an international tour with Eminem’s super-group, 
-    Slaughterhouse—featuring Royce Da 5’9, Joe Budden, Joell Ortiz, and Crooked I—as well as extensive performances throughout Europe, the UK, and South-East Asia.</p>
-  
-  <p>Versatility is the hallmark of his craft. Whether holding down a vibrant club set or curating a sophisticated vibe in a lounge or brewery setting, Sensi moves between genres with ease. He maintains a deep, lifelong immersion in the Jungle scene while consistently keeping his Funk and Soul roots at the forefront of his performance.</p>
-  
-  <p>This dedication led him to become one half of Sensi Warriors, a high-energy jungle-focused duo that supported industry heavyweights including Mickey Finn, General Levy, Aphrodite, and Ed Solo.</p>
-  
-  <p>Today, Sensi continues to evolve while returning to his musical roots. Armed with sharp technical scratching, seamless mixing, and an instinctive ability to read any crowd, he remains a master of moving dancefloors wherever he plays.</p>
-  
-  <p className={`text-sm font-mono uppercase tracking-wide border-t border-zinc-900/80 pt-4 transition-colors duration-500 ${
-    theme === 'club' ? 'text-fuchsia-400' : 'text-amber-400'
-  }`}>
-    For DJ bookings, please reach out via email or my socials.
-  </p>
+    
+              <p>His musical journey has taken him across the globe, including an international tour with Eminem’s super-group, 
+              Slaughterhouse—featuring Royce Da 5’9, Joe Budden, Joell Ortiz, and Crooked I—as well as extensive performances throughout Europe, the UK, and South-East Asia.</p>
+    
+              <p>Versatility is the hallmark of his craft. Whether holding down a vibrant club set or curating a sophisticated vibe in a lounge or brewery setting, Sensi moves between genres with ease. He maintains a deep, lifelong immersion in the Jungle scene while consistently keeping his Funk and Soul roots at the forefront of his performance.</p>
+    
+              <p>This dedication led him to become one half of Sensi Warriors, a high-energy jungle-focused duo that supported industry heavyweights including Mickey Finn, General Levy, Aphrodite, and Ed Solo.</p>
+    
+              <p>Today, Sensi continues to evolve while returning to his musical roots. Armed with sharp technical scratching, seamless mixing, and an instinctive ability to read any crowd, he remains a master of moving dancefloors wherever he plays.</p>
+    
+              <p className={`text-sm font-mono uppercase tracking-wide border-t border-zinc-900/80 pt-4 transition-colors duration-500 ${
+                theme === 'club' ? 'text-fuchsia-400' : 'text-amber-400'
+              }`}>
+                For DJ bookings, please reach out via email or my socials.
+              </p>
             </div>
           </section>
 
@@ -334,7 +332,7 @@ export default function App() {
               
               <div 
                 className="relative w-full rounded-2xl p-4 md:p-8 overflow-hidden bg-cover bg-center border border-white/5 shadow-2xl flex flex-col gap-4"
-                style={{ backgroundImage: `linear-gradient(rgba(10, 10, 12, 0.92), rgba(10, 10, 12, 0.92)), url('/assets/boombox for mixcloud widget.png')` }}
+                style={{ backgroundImage: `linear-gradient(rgba(10, 10, 12, 0.92), rgba(10, 10, 12, 0.92)), url('${import.meta.env.BASE_URL}assets/boombox for mixcloud widget.png')` }}
               >
                 <div className="w-full bg-black/40 rounded-lg p-1 backdrop-blur-sm border border-white/5">
                   <iframe
@@ -370,17 +368,18 @@ export default function App() {
 
               {/* Social Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-              <a href="https://www.youtube.com/@SensiWarriors" target="_blank" rel="noreferrer" className="block w-full">
-  <Card theme={theme}>
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-sm font-bold text-white">YouTube</div>
-        <div className={`text-xs font-mono mt-0.5 transition-colors duration-500 ${theme === 'club' ? 'text-fuchsia-400' : 'text-amber-400'}`}>/SENSI WARRIORS</div>
-      </div>
-      <Badge theme={theme}>Videos</Badge>
-    </div> 
-  </Card>
-</a>
+                <a href="https://www.youtube.com/@SensiWarriors" target="_blank" rel="noreferrer" className="block w-full">
+                  <Card theme={theme}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-bold text-white">YouTube</div>
+                        <div className={`text-xs font-mono mt-0.5 transition-colors duration-500 ${theme === 'club' ? 'text-fuchsia-400' : 'text-amber-400'}`}>/SENSI WARRIORS</div>
+                      </div>
+                      <Badge theme={theme}>Videos</Badge>
+                    </div> 
+                  </Card>
+                </a>
+                
                 <a href="https://instagram.com/sensiwarriors" target="_blank" rel="noreferrer" className="block w-full">
                   <Card theme={theme}>
                     <div className="flex items-center justify-between">
