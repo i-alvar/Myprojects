@@ -1,8 +1,18 @@
 import { useState, type ReactNode } from 'react'
 import Vinyl from '../components/vinyl'
 
-// Bypasses the missing Node types error safely in browser environments
-const BASE_PATH = (typeof process !== 'undefined' && (process as any).env?.PUBLIC_URL) || '';
+// Completely bypasses the missing 'process' type check by evaluating window properties dynamically
+const getPublicUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const customWindow = window as any;
+    if (customWindow.process?.env?.PUBLIC_URL) {
+      return customWindow.process.env.PUBLIC_URL;
+    }
+  }
+  return '';
+};
+
+const BASE_PATH = getPublicUrl();
 
 // --- Adaptable Section Title ---
 const SectionTitle = ({ children, theme }: { children: ReactNode; theme: 'club' | 'lounge' }) => (
@@ -144,11 +154,7 @@ export default function App() {
   const [vinylLoaded, setVinylLoaded] = useState(false)
   const [theme, setTheme] = useState<'club' | 'lounge'>('club')
 
-  const targetEmail = 'your-email@gmail.com'
-  const secondEmail = 'management-email@gmail.com'
-  const subject = encodeURIComponent('DJ Sensi Booking Inquiry')
-  const body = encodeURIComponent(`Hi DJ Sensi,\n\nI want to inquire about booking you for an upcoming event...\n\n`)
-  const mailtoString = `mailto:${targetEmail}?cc=${secondEmail}&subject=${subject}&body=${body}`
+  const targetEmail = 'sensiwarriors@gmail.com'
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100 font-sans overflow-x-hidden relative transition-colors duration-700 selection:bg-white selection:text-black">
@@ -301,7 +307,7 @@ export default function App() {
                 <p className="text-zinc-400 font-mono text-xs uppercase tracking-wider">Direct Promoter & Event Booking Inquiries</p>
                 <p className="text-sm text-zinc-300 max-w-md mx-auto">Click below to open your email client with our official performance specification template pre-loaded.</p>
                 <a 
-                  href="mailto:sensiwarriors@gmail.com"
+                  href={`mailto:${targetEmail}`}
                   className={`inline-block w-full text-white font-black uppercase text-xs tracking-widest py-4 rounded-xl hover:scale-[1.01] active:scale-[0.99] text-center transition-all duration-500 shadow-xl ${
                     theme === 'club' 
                       ? 'bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 shadow-fuchsia-500/10' 
