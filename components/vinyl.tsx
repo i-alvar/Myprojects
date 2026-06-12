@@ -19,10 +19,10 @@ function VinylModel({
   const ref = useRef<THREE.Group>(null)
   const wrapper = useRef<THREE.Group>(null)
   
-  // Cast useGLTF safely to navigate scene hierarchy
+  // Safe relative resolution for GitHub Pages subdirectory structures
   const { scene } = useGLTF('./models/vinyl_single.glb') as any
 
-  // Color adjustments
+  // Material and asset styling alignment
   useEffect(() => {
     if (!scene) return
     scene.traverse((child: any) => {
@@ -36,12 +36,12 @@ function VinylModel({
     })
   }, [scene])
 
-  // Tilt the record
+  // Tilt setting for interactive angle layout
   useEffect(() => {
     if (ref.current) ref.current.rotation.x = 0.45
   }, [])
 
-  // Apply shrink AFTER Bounds animation
+  // Auto shrink scale buffer post animation
   useEffect(() => {
     const t = setTimeout(() => {
       if (wrapper.current) {
@@ -74,7 +74,7 @@ function VinylModel({
     onSpeedChange(velocity.current)
   }
 
-  // Auto spin
+  // Animation framework rendering tick loop
   useEffect(() => {
     let frame: number
     const animate = () => {
@@ -109,14 +109,13 @@ interface VinylProps {
 }
 
 export default function Vinyl({ onReady = () => {} }: VinylProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const audioCtx = useRef<AudioContext | null>(null)
   const workletNode = useRef<AudioWorkletNode | null>(null)
 
   const [spinning, setSpinning] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(0)
   const [dragging, setDragging] = useState<boolean>(false)
-
-  // Track viewport boundary to force matrix recalculation below 768px
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
@@ -127,11 +126,12 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Load audio
+  // Async core runtime initialization layout
   useEffect(() => {
     const loadAudio = async () => {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
       audioCtx.current = new AudioContextClass()
+
       await audioCtx.current.audioWorklet.addModule('./worklets/vinylProcessor.js')
 
       workletNode.current = new AudioWorkletNode(audioCtx.current, 'vinyl-processor')
@@ -151,10 +151,38 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
       await audioCtx.current.resume()
     }
 
-    loadAudio()
+    loadAudio().catch(err => console.error("Audio system initialized dynamically with asset restrictions:", err))
   }, [])
 
-  // Speed control
+  // Smart Observer: Suspends the audio pipeline strictly if it is NOT active/playing when off screen
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!audioCtx.current) return
+
+        if (entry.isIntersecting) {
+          if (audioCtx.current.state === 'suspended') {
+            audioCtx.current.resume()
+          }
+        } else {
+          if (!spinning && audioCtx.current.state === 'running') {
+            audioCtx.current.suspend()
+          }
+        }
+      },
+      { 
+        rootMargin: '100px 0px', 
+        threshold: 0.0 
+      }
+    )
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [spinning])
+
+  // Direct downstream message transmission link to Worklet thread
   useEffect(() => {
     if (!workletNode.current) return
 
@@ -187,19 +215,18 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
 
   return (
     <div 
+      ref={containerRef}
       style={{ 
         width: '100%', 
         height: '100%', 
         cursor: dragging ? 'grabbing' : 'grab',
-        touchAction: 'none' // Locks mobile finger drag strictly to the model interaction
+        touchAction: 'none'
       }}
     >
-      {/* Changed handler to onClick for uniform desktop and mobile behavior */}
       <Canvas camera={{ fov: 20 }} onClick={handleClick}>
         <ambientLight intensity={1.2} />
         <directionalLight position={[5, 35, 5]} intensity={8.0} castShadow />
 
-        {/* Dynamic component key resets bounding-box math on layout snap points */}
         <Bounds fit clip margin={1.2} key={isMobile ? 'mobile' : 'desktop'}>
           <VinylModel
             spinning={spinning}
