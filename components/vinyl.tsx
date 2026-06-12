@@ -104,10 +104,8 @@ interface VinylProps {
 }
 
 export default function Vinyl({ onReady = () => {} }: VinylProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
   const audioCtx = useRef<AudioContext | null>(null)
   const workletNode = useRef<AudioWorkletNode | null>(null)
-  const gainNode = useRef<GainNode | null>(null) // Electronic volume fader block
 
   const [spinning, setSpinning] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(0)
@@ -122,7 +120,7 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Audio setup with hardware Gain integration
+  // Clean, lightweight background audio system initialization
   useEffect(() => {
     const loadAudio = async () => {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
@@ -131,13 +129,7 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
       await audioCtx.current.audioWorklet.addModule('./worklets/vinylProcessor.js')
 
       workletNode.current = new AudioWorkletNode(audioCtx.current, 'vinyl-processor')
-      
-      // Create and chain the hardware Gain fader
-      gainNode.current = audioCtx.current.createGain()
-      gainNode.current.gain.setValueAtTime(1, audioCtx.current.currentTime)
-      
-      workletNode.current.connect(gainNode.current)
-      gainNode.current.connect(audioCtx.current.destination)
+      workletNode.current.connect(audioCtx.current.destination)
 
       const res = await fetch('./assets/vinyl_loop.wav')
       const arrayBuffer = await res.arrayBuffer()
@@ -150,58 +142,15 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
         buffer: samples
       })
 
+      // Start completely static to prevent initialization pop
+      workletNode.current.port.postMessage({ type: 'speed', speed: 0 })
       await audioCtx.current.resume()
     }
 
-    loadAudio().catch(err => console.error("Audio engine failed initialization:", err))
+    loadAudio().catch(err => console.error("Audio system load exception:", err))
   }, [])
 
-  // --- ANTI-POP FADE INTERSECTION OBSERVER ---
-  useEffect(() => {
-    if (!containerRef.current) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!audioCtx.current || !gainNode.current) return
-
-        const now = audioCtx.current.currentTime
-
-        if (entry.isIntersecting) {
-          // Bring audio back online gracefully
-          if (audioCtx.current.state === 'suspended') {
-            audioCtx.current.resume().then(() => {
-              if (gainNode.current && audioCtx.current) {
-                gainNode.current.gain.linearRampToValueAtTime(1, audioCtx.current.currentTime + 0.05)
-              }
-            })
-          } else {
-            gainNode.current.gain.linearRampToValueAtTime(1, now + 0.05)
-          }
-        } else {
-          // If NOT spinning and scrolled away, ramp the volume down to 0 before suspending
-          if (!spinning) {
-            gainNode.current.gain.linearRampToValueAtTime(0, now + 0.05)
-            
-            setTimeout(() => {
-              // Only suspend if the user didn't instantly scroll back up during the fade window
-              if (audioCtx.current && !spinning && !entry.isIntersecting) {
-                audioCtx.current.suspend()
-              }
-            }, 60)
-          }
-        }
-      },
-      { 
-        rootMargin: '150px 0px', // Increased margin so transitions execute before coming into view
-        threshold: 0.0 
-      }
-    )
-
-    observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [spinning])
-
-  // Speed adjustments
+  // Clear, direct speed communication block
   useEffect(() => {
     if (!workletNode.current) return
 
@@ -236,7 +185,6 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
 
   return (
     <div 
-      ref={containerRef}
       style={{ 
         width: '100%', 
         height: '100%', 
