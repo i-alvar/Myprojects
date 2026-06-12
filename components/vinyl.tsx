@@ -20,7 +20,7 @@ function VinylModel({
   const wrapper = useRef<THREE.Group>(null)
   
   // Cast useGLTF safely to navigate scene hierarchy
-  const { scene } = useGLTF('/models/vinyl_single.glb') as any
+  const { scene } = useGLTF('./models/vinyl_single.glb') as any
 
   // Color adjustments
   useEffect(() => {
@@ -132,12 +132,12 @@ export default function Vinyl({ onReady = () => {} }: VinylProps) {
     const loadAudio = async () => {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
       audioCtx.current = new AudioContextClass()
-      await audioCtx.current.audioWorklet.addModule('/worklets/vinylProcessor.js')
+      await audioCtx.current.audioWorklet.addModule('./worklets/vinylProcessor.js')
 
       workletNode.current = new AudioWorkletNode(audioCtx.current, 'vinyl-processor')
       workletNode.current.connect(audioCtx.current.destination)
 
-      const res = await fetch('/assets/vinyl_loop.mp3')
+      const res = await fetch('./assets/vinyl_loop.mp3')
       const arrayBuffer = await res.arrayBuffer()
       const buffer = await audioCtx.current.decodeAudioData(arrayBuffer)
 
