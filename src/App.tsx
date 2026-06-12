@@ -1,8 +1,33 @@
-import { useState, type ReactNode } from 'react'
+import React, { useState, type ReactNode } from 'react'
 import Vinyl from '../components/vinyl'
 
-// Using strict relative paths prevents Vite subdirectory 404 asset drops
 const BASE_PATH = '.';
+
+// --- React Error Boundary to Isolate Audio Crashes ---
+class VinylErrorBoundary extends React.Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Vinyl component failed gracefully:", error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback
+    }
+    return this.props.children
+  }
+}
 
 // --- Adaptable Section Title ---
 const SectionTitle = ({ children, theme }: { children: ReactNode; theme: 'club' | 'lounge' }) => (
@@ -142,10 +167,15 @@ const PhotoGallery = ({ theme }: { theme: 'club' | 'lounge' }) => {
 
 export default function App() {
   const [vinylLoaded, setVinylLoaded] = useState(false)
-  const [vinylError, setVinylError] = useState(false)
   const [theme, setTheme] = useState<'club' | 'lounge'>('club')
 
   const targetEmail = 'sensiwarriors@gmail.com'
+
+  const deckOfflineFallback = (
+    <div className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase border border-dashed border-zinc-800/80 rounded-full w-40 h-40 flex items-center justify-center text-center p-4 bg-zinc-950/20 backdrop-blur-sm animate-pulse">
+      [ Deck Offline ]
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100 font-sans overflow-x-hidden relative transition-colors duration-700 selection:bg-white selection:text-black">
@@ -249,19 +279,13 @@ export default function App() {
             <img src={`${BASE_PATH}/assets/turntable_base.png`} alt="Base" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0" />
             
             <div className="absolute left-[17.5%] top-[-6%] w-[55%] h-[100%] z-10 flex items-center justify-center">
-              {/* Wrapped component inside safety bounds to isolate vinyl processor drops */}
-              {!vinylError ? (
-                <div onError={() => setVinylError(true)}>
-                  <Vinyl onReady={() => setVinylLoaded(true)} />
-                </div>
-              ) : (
-                <div className="text-[11px] text-zinc-600 font-mono tracking-wide uppercase border border-dashed border-zinc-800 rounded-full w-40 h-40 flex items-center justify-center text-center p-4">
-                  Deck offline
-                </div>
-              )}
+              {/* Audio sandbox error boundary explicitly handles vinyl sub-component system drops */}
+              <VinylErrorBoundary fallback={deckOfflineFallback}>
+                <Vinyl onReady={() => setVinylLoaded(true)} />
+              </VinylErrorBoundary>
             </div>
 
-            {vinylLoaded && !vinylError && (
+            {vinylLoaded && (
               <img src={`${BASE_PATH}/assets/tonearm.png`} alt="Tonearm" className="absolute left-[31%] top-[2.2%] w-[55%] h-[70%] object-contain pointer-events-none z-20 opacity-0 animate-tonearmFade" />
             )}
           </div>
